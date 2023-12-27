@@ -1,12 +1,7 @@
 #include "glfw/platform_factory.hpp"
+
 #include "platform_manager.hpp"
-#include "time.hpp"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <cstdlib>
-#include <cstddef>
+#include "core_manager.hpp"
 
 typedef struct Vertex
 {
@@ -44,14 +39,11 @@ static const char* fragment_shader_text =
 
 int main()
 {
-    auto platform_factory = new glfw::PlatformFactory();
+    CoreManager     core_manager;
+    PlatformManager platform_manager;
 
-    auto platform = platform_factory->create_platform();
-    auto window   = platform_factory->create_window();
-
-    PlatformManager platform_manager(platform, window);
-
-    platform_manager.init({ "Template", 800, 600 });
+    core_manager.init();
+    platform_manager.init(new glfw::PlatformFactory(), { "Template", 800, 600 });
 
     GLuint vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
@@ -84,15 +76,12 @@ int main()
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
 
-    Time time;
-    time.init();
-
     auto angle = 0.0f;
     auto speed = 60.0f;
 
-    while (!window->is_closed())
+    while (platform_manager.is_active())
     {
-        time.update();
+        core_manager.update();
 
         auto width  = window::Screen::width();
         auto height = window::Screen::height();
@@ -116,6 +105,7 @@ int main()
         platform_manager.update();
     }
 
+    core_manager.release();
     platform_manager.release();
 
     exit(EXIT_SUCCESS);
