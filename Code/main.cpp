@@ -1,6 +1,6 @@
 #include "glfw/platform_factory.hpp"
-
 #include "platform_manager.hpp"
+#include "time.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -84,8 +84,16 @@ int main()
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
 
+    Time time;
+    time.init();
+
+    auto angle = 0.0f;
+    auto speed = 60.0f;
+
     while (!window->is_closed())
     {
+        time.update();
+
         auto  width  = window::Screen::width();
         auto  height = window::Screen::height();
         auto  ratio = window::Screen::ratio();
@@ -93,8 +101,10 @@ int main()
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // glm::vec3 a = glm::vec3(0.0f, 0.0f, 1.0f);
-        glm::mat4 m(1.0f); // glm::rotate(glm::mat4(1.0f), glm::radians(angle, a);
+        angle += speed * time.delta_time();
+
+        glm::vec3 a = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::mat4 m = glm::rotate(glm::mat4(1.0f), glm::radians(angle), a);
         glm::mat4 p = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 1.0f, -1.0f);
         glm::mat4 mvp = p * m;
 
