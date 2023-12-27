@@ -39,8 +39,8 @@ static const char* fragment_shader_text =
 
 int main()
 {
-    CoreManager     core_manager;
-    PlatformManager platform_manager;
+    CoreManager      core_manager;
+    PlatformManager& platform_manager = PlatformManager::instance();
 
     core_manager.init();
     platform_manager.init(new glfw::PlatformFactory(), { "Template", 800, 600 });
