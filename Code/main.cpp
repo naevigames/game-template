@@ -94,14 +94,14 @@ int main()
     {
         time.update();
 
-        auto  width  = window::Screen::width();
-        auto  height = window::Screen::height();
-        auto  ratio = window::Screen::ratio();
+        auto width  = window::Screen::width();
+        auto height = window::Screen::height();
+        auto ratio  = window::Screen::ratio();
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        angle += speed * time.delta_time();
+        angle += speed * Time::delta_time();
 
         glm::vec3 a = glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 m = glm::rotate(glm::mat4(1.0f), glm::radians(angle), a);
