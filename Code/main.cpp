@@ -3,6 +3,11 @@
 #include "platform_manager.hpp"
 #include "core_manager.hpp"
 
+enum Action
+{
+    Exit
+};
+
 typedef struct Vertex
 {
     glm::vec2 pos;
@@ -45,6 +50,14 @@ int main()
     core_manager.init();
     platform_manager.init(new glfw::PlatformFactory(), { "Template", 800, 600 });
 
+    gainput::InputManager input_manager;
+    input_manager.SetDisplaySize(800, 600);
+
+    const gainput::DeviceId keyboard_id = input_manager.CreateDevice<gainput::InputDeviceKeyboard>();
+
+    gainput::InputMap input_map(input_manager);
+    input_map.MapBool(Action::Exit, keyboard_id, gainput::KeyEscape);
+
     GLuint vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -76,12 +89,20 @@ int main()
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
 
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+
     auto angle = 0.0f;
     auto speed = 60.0f;
 
     while (platform_manager.is_active())
     {
         core_manager.update();
+        input_manager.Update();
+
+        if (input_map.GetBoolWasDown(Action::Exit))
+        {
+            platform_manager.shutdown();
+        }
 
         auto width  = window::Screen::width();
         auto height = window::Screen::height();
