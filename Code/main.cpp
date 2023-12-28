@@ -60,24 +60,23 @@ int main()
     gainput::InputMap input_map(input_manager);
     input_map.MapBool(Action::Exit, keyboard_id, gainput::KeyEscape);
 
-    gl::Shader vert_shader;
-    vert_shader.create(GL_VERTEX_SHADER);
-    vert_shader.source(vertex_shader_text);
-    vert_shader.compile();
+    gl::ShaderStage vert_stage;
+    vert_stage.create(GL_VERTEX_SHADER);
+    vert_stage.source(vertex_shader_text);
 
-    gl::Shader frag_shader;
-    frag_shader.create(GL_FRAGMENT_SHADER);
-    frag_shader.source(fragment_shader_text);
-    frag_shader.compile();
+    gl::ShaderStage frag_stage;
+    frag_stage.create(GL_FRAGMENT_SHADER);
+    frag_stage.source(fragment_shader_text);
 
-    const GLuint program = glCreateProgram();
-    glAttachShader(program, vert_shader.handle());
-    glAttachShader(program, frag_shader.handle());
-    glLinkProgram(program);
+    gl::Shader shader;
+    shader.create();
+    shader.attach(vert_stage);
+    shader.attach(frag_stage);
+    shader.compile();
 
     const GLint vpos_location = 0;
     const GLint vcol_location = 1;
-    const GLint mvp_location  = glGetUniformLocation(program, "MVP");
+    const GLint mvp_location  = 0;
 
     GLuint vertex_array;
     glGenVertexArrays(1, &vertex_array);
@@ -122,7 +121,7 @@ int main()
         glm::mat4 p = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 1.0f, -1.0f);
         glm::mat4 mvp = p * m;
 
-        glUseProgram(program);
+        shader.bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp);
 
         glBindVertexArray(vertex_array);
