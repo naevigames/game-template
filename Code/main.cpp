@@ -3,7 +3,7 @@
 #include "platform_manager.hpp"
 #include "core_manager.hpp"
 
-#include "shader.hpp"
+#include "gl/shader.hpp"
 
 enum Action
 {
@@ -60,19 +60,19 @@ int main()
     gainput::InputMap input_map(input_manager);
     input_map.MapBool(Action::Exit, keyboard_id, gainput::KeyEscape);
 
-    Shader vert_shader;
+    gl::Shader vert_shader;
+    vert_shader.create(GL_VERTEX_SHADER);
+    vert_shader.source(vertex_shader_text);
+    vert_shader.compile();
 
-    const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
-
-    const GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
+    gl::Shader frag_shader;
+    frag_shader.create(GL_FRAGMENT_SHADER);
+    frag_shader.source(fragment_shader_text);
+    frag_shader.compile();
 
     const GLuint program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
+    glAttachShader(program, vert_shader.handle());
+    glAttachShader(program, frag_shader.handle());
     glLinkProgram(program);
 
     const GLint vpos_location = 0;
@@ -108,9 +108,9 @@ int main()
             platform_manager.shutdown();
         }
 
-        auto width  = window::Screen::width();
-        auto height = window::Screen::height();
-        auto ratio  = window::Screen::ratio();
+        auto width  = WindowScreen::width();
+        auto height = WindowScreen::height();
+        auto ratio  = WindowScreen::ratio();
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
