@@ -3,7 +3,11 @@
 #include "platform_manager.hpp"
 #include "core_manager.hpp"
 
+#include "screen.hpp"
+#include "file.hpp"
+
 #include "gl/shader.hpp"
+#include "gl/buffer.hpp"
 
 enum Action
 {
@@ -23,27 +27,6 @@ static const Vertex vertices[3] =
 { {   0.f,  0.6f }, { 0.f, 0.f, 1.f } }
 };
 
-static const char* vertex_shader_text =
-"#version 330\n"
-"uniform mat4 MVP;\n"
-"layout (location = 0) in vec2 vPos;\n"
-"layout (location = 1) in vec3 vCol;\n"
-"out vec3 color;\n"
-"void main()\n"
-"{\n"
-"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-"    color = vCol;\n"
-"}\n";
-
-static const char* fragment_shader_text =
-"#version 330\n"
-"in vec3 color;\n"
-"out vec4 fragment;\n"
-"void main()\n"
-"{\n"
-"    fragment = vec4(color, 1.0);\n"
-"}\n";
-
 int main()
 {
     CoreManager      core_manager;
@@ -60,13 +43,16 @@ int main()
     gainput::InputMap input_map(input_manager);
     input_map.MapBool(Action::Exit, keyboard_id, gainput::KeyEscape);
 
+    auto vert_source = File::read<char>("../simple_vert.glsl");
+    auto frag_source = File::read<char>("../simple_frag.glsl");
+
     gl::ShaderStage vert_stage;
     vert_stage.create(GL_VERTEX_SHADER);
-    vert_stage.source(vertex_shader_text);
+    vert_stage.source(vert_source);
 
     gl::ShaderStage frag_stage;
     frag_stage.create(GL_FRAGMENT_SHADER);
-    frag_stage.source(fragment_shader_text);
+    frag_stage.source(frag_source);
 
     gl::Shader shader;
     shader.create();
@@ -107,9 +93,9 @@ int main()
             platform_manager.shutdown();
         }
 
-        auto width  = WindowScreen::width();
-        auto height = WindowScreen::height();
-        auto ratio  = WindowScreen::ratio();
+        auto width  = Screen::width();
+        auto height = Screen::height();
+        auto ratio  = Screen::ratio();
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
