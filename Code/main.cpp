@@ -20,11 +20,11 @@ typedef struct Vertex
     glm::vec3 col;
 } Vertex;
 
-static const Vertex vertices[3] =
+std::vector<Vertex> vertices
 {
-{ { -0.6f, -0.4f }, { 1.f, 0.f, 0.f } },
-{ {  0.6f, -0.4f }, { 0.f, 1.f, 0.f } },
-{ {   0.f,  0.6f }, { 0.f, 0.f, 1.f } }
+    { { -0.6f, -0.4f }, { 1.f, 0.f, 0.f } },
+    { {  0.6f, -0.4f }, { 0.f, 1.f, 0.f } },
+    { {   0.f,  0.6f }, { 0.f, 0.f, 1.f } }
 };
 
 int main()
@@ -60,6 +60,12 @@ int main()
     shader.attach(frag_stage);
     shader.compile();
 
+    shader.detach(vert_stage);
+    shader.detach(frag_stage);
+
+    vert_stage.release();
+    frag_stage.release();
+
     const GLint vpos_location = 0;
     const GLint vcol_location = 1;
     const GLint mvp_location  = 0;
@@ -68,10 +74,10 @@ int main()
     glGenVertexArrays(1, &vertex_array);
     glBindVertexArray(vertex_array);
 
-    GLuint vertex_buffer;
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    gl::Buffer vert_buffer { GL_ARRAY_BUFFER };
+    vert_buffer.create();
+    vert_buffer.bind();
+    vert_buffer.source(gl::BufferData::make_data(vertices));
 
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
