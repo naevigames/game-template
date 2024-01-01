@@ -27,6 +27,11 @@ std::vector<Vertex> vertices
     { {   0.f,  0.6f }, { 0.f, 0.f, 1.f } }
 };
 
+std::vector<uint32_t> indices
+{
+    0, 1, 2
+};
+
 int main()
 {
     CoreManager      core_manager;
@@ -70,14 +75,19 @@ int main()
     const GLint vcol_location = 1;
     const GLint mvp_location  = 0;
 
-    GLuint vertex_array;
-    glGenVertexArrays(1, &vertex_array);
-    glBindVertexArray(vertex_array);
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    gl::Buffer vert_buffer { GL_ARRAY_BUFFER };
-    vert_buffer.create();
-    vert_buffer.bind();
-    vert_buffer.source(gl::BufferData::make_data(vertices));
+    gl::Buffer vbo {GL_ARRAY_BUFFER };
+    vbo.create();
+    vbo.bind();
+    vbo.source(base::Buffer::make_data(vertices));
+
+    gl::Buffer ibo { GL_ELEMENT_ARRAY_BUFFER };
+    ibo.create();
+    ibo.bind();
+    ibo.source(base::Buffer::make_data(indices));
 
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
@@ -116,8 +126,9 @@ int main()
         shader.bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp);
 
-        glBindVertexArray(vertex_array);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(vao);
+        
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
         platform_manager.update();
     }
