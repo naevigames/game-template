@@ -94,6 +94,10 @@ int main()
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
 
+    gl::Buffer uniform { GL_UNIFORM_BUFFER };
+    uniform.create();
+    uniform.bind(0);
+
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
     auto angle = 0.0f;
@@ -122,6 +126,9 @@ int main()
         glm::mat4 m = glm::rotate(glm::mat4(1.0f), glm::radians(angle), a);
         glm::mat4 p = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 1.0f, -1.0f);
         glm::mat4 mvp = p * m;
+
+        uniform.bind();
+        uniform.source(base::Buffer::make_data(&mvp));
 
         shader.bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp);
