@@ -1,4 +1,5 @@
 #include "glfw/platform_factory.hpp"
+#include "win32/platform_factory.hpp"
 
 #include "platform_manager.hpp"
 #include "core_manager.hpp"
@@ -37,8 +38,14 @@ int main()
     CoreManager      core_manager;
     PlatformManager& platform_manager = PlatformManager::instance();
 
+    #ifdef USE_OPENGL
+    auto platform_factory = new glfw::PlatformFactory();
+    #else
+    auto platform_factory = new win32::PlatformFactory();
+    #endif
+
     core_manager.init();
-    platform_manager.init(new glfw::PlatformFactory(), { "Template", 800, 600 });
+    platform_manager.init(platform_factory, { "Template", 800, 600 });
 
     gainput::InputManager input_manager;
     input_manager.SetDisplaySize(800, 600);
@@ -47,6 +54,8 @@ int main()
 
     gainput::InputMap input_map(input_manager);
     input_map.MapBool(Action::Exit, keyboard_id, gainput::KeyEscape);
+
+    #ifdef USE_OPENGL
 
     auto vert_source = File::read<char>("../simple_vert.glsl");
     auto frag_source = File::read<char>("../simple_frag.glsl");
@@ -100,6 +109,8 @@ int main()
 
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
+    #endif
+
     auto angle = 0.0f;
     auto speed = 60.0f;
 
@@ -116,6 +127,8 @@ int main()
         auto width  = Screen::width();
         auto height = Screen::height();
         auto ratio  = Screen::ratio();
+
+        #ifdef USE_OPENGL
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -136,6 +149,8 @@ int main()
         glBindVertexArray(vao);
         
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        #endif
 
         platform_manager.update();
     }
