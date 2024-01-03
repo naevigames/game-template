@@ -16,6 +16,7 @@
 #else
 
 #include "vk/instance.hpp"
+#include "vk/surface.hpp"
 
 #endif
 
@@ -278,15 +279,17 @@ int main()
     vk::Instance vk_instance;
     vk_instance.create();
 
-    VkDevice   device;
+    vk::Surface vk_surface;
+    vk_surface.create(vk_instance, platform_manager.win32_handle());
 
-    VkSurfaceKHR surface;
+    VkDevice device;
 
     VkPhysicalDevice physicalDevice;
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(vk_instance.handle(), &deviceCount, nullptr);
 
-    if (deviceCount == 0) {
+    if (deviceCount == 0)
+    {
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
@@ -307,21 +310,11 @@ int main()
         throw std::runtime_error("failed to find a suitable GPU!");
     }
 
-    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { }; // TODO add a class for this
-    surfaceCreateInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    surfaceCreateInfo.hwnd      = platform_manager.win32_handle();
-    surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
-
-    if (vkCreateWin32SurfaceKHR(vk_instance.handle(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create window surface!");
-    }
-
     VkQueue graphicQueue;
     VkQueue presentQueue;
 
     float queuePriority = 1.0f;
-    QueueFamilyIndices indices_queue = findQueueFamilies(physicalDevice, surface);
+    QueueFamilyIndices indices_queue = findQueueFamilies(physicalDevice, vk_surface.handle());
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = { indices_queue.graphicsFamily.value(), indices_queue.presentFamily.value() };
@@ -355,7 +348,7 @@ int main()
     vkGetDeviceQueue(device, indices_queue.graphicsFamily.value(), 0, &graphicQueue);
     vkGetDeviceQueue(device, indices_queue.presentFamily.value(), 0, &presentQueue);
 
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, vk_surface.handle());
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -369,7 +362,7 @@ int main()
 
     VkSwapchainCreateInfoKHR swapcreateInfo{};
     swapcreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapcreateInfo.surface = surface;
+    swapcreateInfo.surface = vk_surface.handle();
     swapcreateInfo.minImageCount = imageCount;
     swapcreateInfo.imageFormat = surfaceFormat.format;
     swapcreateInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -497,9 +490,9 @@ int main()
     }
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
-    vkDestroySurfaceKHR(vk_instance.handle(), surface, nullptr);
     vkDestroyDevice(device, nullptr);
 
+    vk_surface.release(vk_instance);
     vk_instance.release();
 
     #endif
