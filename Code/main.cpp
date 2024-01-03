@@ -7,11 +7,17 @@
 #include "screen.hpp"
 #include "file.hpp"
 
+#ifdef USE_OPENGL
+
 #include "gl/shader.hpp"
 #include "gl/buffer.hpp"
 #include "gl/vertex_array.hpp"
 
-#include <vulkan/vulkan.h>
+#else
+
+#include "vk/instance.hpp"
+
+#endif
 
 #include <iostream>
 #include <set>
@@ -269,58 +275,23 @@ int main()
 
     #else
 
-    const char* create_extensions[2]
-    {
-        "VK_KHR_surface",
-        "VK_KHR_win32_surface"
-    };
+    vk::Instance vk_instance;
+    vk_instance.create();
 
-    uint32_t extensions_count = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensions_count);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, extensions.data());
-
-    std::cout << "available extensions:\n";
-
-    for (const auto& extension : extensions) {
-        std::cout << '\t' << extension.extensionName << '\n';
-    }
-
-    VkInstance instance;
     VkDevice   device;
 
     VkSurfaceKHR surface;
 
-    VkApplicationInfo appinfo { };
-    appinfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appinfo.pApplicationName   = "Template";
-    appinfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appinfo.pEngineName        = "No Engine";
-    appinfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
-    appinfo.apiVersion         = VK_API_VERSION_1_0;
-
-    VkInstanceCreateInfo createinfo { };
-    createinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createinfo.pApplicationInfo = &appinfo;
-    createinfo.enabledExtensionCount = 2;
-    createinfo.ppEnabledExtensionNames = create_extensions;
-    createinfo.enabledLayerCount = 0;
-
-    if (vkCreateInstance(&createinfo, nullptr, &instance) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create instance!");
-    }
-
     VkPhysicalDevice physicalDevice;
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(vk_instance.handle(), &deviceCount, nullptr);
 
     if (deviceCount == 0) {
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(vk_instance.handle(), &deviceCount, devices.data());
 
     for (const auto& pd : devices)
     {
@@ -336,12 +307,12 @@ int main()
         throw std::runtime_error("failed to find a suitable GPU!");
     }
 
-    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { };
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { }; // TODO add a class for this
     surfaceCreateInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surfaceCreateInfo.hwnd      = platform_manager.win32_handle();
     surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
 
-    if (vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS)
+    if (vkCreateWin32SurfaceKHR(vk_instance.handle(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create window surface!");
     }
@@ -526,9 +497,10 @@ int main()
     }
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
-    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroySurfaceKHR(vk_instance.handle(), surface, nullptr);
     vkDestroyDevice(device, nullptr);
-    vkDestroyInstance(instance, nullptr);
+
+    vk_instance.release();
 
     #endif
 
